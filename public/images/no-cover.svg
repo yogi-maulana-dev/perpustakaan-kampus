@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400" role="img" aria-label="Belum ada gambar">
+  <rect width="300" height="400" fill="#f1f5f4"/>
+  <rect x="0.5" y="0.5" width="299" height="399" fill="none" stroke="#d1ddd9" stroke-width="1"/>
+  <g transform="translate(150 165)" fill="none" stroke="#9bb5ad" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-45 -55 H35 a10 10 0 0 1 10 10 V55 H-35 a10 10 0 0 1 -10 -10 Z"/>
+    <path d="M-45 50 a10 10 0 0 1 10 -10 H45"/>
+  </g>
+  <circle cx="150" cy="150" r="78" fill="none" stroke="#c4d4cf" stroke-width="4"/>
+  <line x1="100" y1="100" x2="200" y2="200" stroke="#c4d4cf" stroke-width="4" stroke-linecap="round"/>
+  <text x="150" y="285" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#5b7a72">Belum ada gambar</text>
+  <text x="150" y="312" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#90a8a1">Perpustakaan UML</text>
+</svg>
