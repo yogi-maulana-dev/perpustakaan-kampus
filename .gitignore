@@ -89,3 +89,8 @@ Homestead.json
 .phpactor.json
 auth.json
 >>>>>>> e1258701eb530c436ceb55ee81754b607cab8c14
+
+# Database
+/database/
+*.sql
+*.sqlite
