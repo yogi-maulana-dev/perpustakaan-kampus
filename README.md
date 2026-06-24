@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
@@ -56,3 +57,35 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+=======
+# 📚 Sistem Informasi Perpustakaan Kampus
+
+Aplikasi manajemen perpustakaan kampus berbasis **Laravel** yang dirancang untuk membantu pengelolaan layanan perpustakaan secara digital.
+
+## ✨ Fitur Utama
+
+- 🔐 Autentikasi pengguna
+- 👥 Manajemen anggota / mahasiswa
+- 📖 Manajemen data buku
+- 🏷️ Kategori dan klasifikasi buku
+- 🔄 Sistem peminjaman dan pengembalian buku
+- ⏰ Pengaturan batas waktu peminjaman
+- 📊 Dashboard administrasi
+- 🧾 Laporan transaksi perpustakaan
+- 🔎 Pencarian koleksi buku
+
+## 🛠️ Teknologi
+
+- Laravel
+- PHP
+- MySQL
+- Bootstrap / Tailwind CSS
+- JavaScript
+
+## 🚀 Instalasi
+
+Clone repository:
+
+```bash
+git clone https://github.com/yogi-maulana-dev/perpustakaan-kampus.git
+>>>>>>> e1258701eb530c436ceb55ee81754b607cab8c14
