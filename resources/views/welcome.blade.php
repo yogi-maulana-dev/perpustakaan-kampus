@@ -32,41 +32,22 @@
         .heroSwiper .swiper-pagination-bullet{background:#cbd5e1;opacity:1}
         .heroSwiper .swiper-pagination-bullet-active{background:#059669;width:28px;border-radius:6px}
         .pengurusSwiper .swiper-pagination-bullet-active{background:#059669}
+        /* Bingkai lengkung gradien hijau-kuning; BERPUTAR saat foto disentuh/hover (gaya Tim LP2M) */
+        .tim-ring{position:relative}
+        .tim-ring::before{content:"";position:absolute;inset:0;border-radius:9999px;
+            background:conic-gradient(from 200deg,#15803d 0deg 132deg,transparent 132deg 176deg,#f5c518 176deg 320deg,transparent 320deg 360deg)}
+        .tim-ring>*{position:relative;z-index:1}
+        /* Muter hanya ketika disentuh / hover */
+        .tim-ring:hover::before,.tim-ring:active::before,.swiper-slide:hover .tim-ring::before{animation:timspin 4s linear infinite}
+        @keyframes timspin{to{transform:rotate(360deg)}}
+        @media (prefers-reduced-motion:reduce){.tim-ring::before{animation:none}}
         @keyframes floaty{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(6deg)}}
     </style>
 </head>
 <body class="font-sans text-gray-800 antialiased">
 
-    {{-- ===== Navbar ===== --}}
-    <header class="absolute inset-x-0 top-0 z-40" id="nav">
-        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6">
-            <a href="{{ route('home') }}" class="flex items-center gap-2 sm:gap-3">
-                <span class="flex h-10 items-center rounded-xl bg-white/80 px-2 shadow-sm sm:h-12">
-                    <img src="{{ \App\Models\Setting::logoUrl() }}" alt="Logo UML" class="h-7 w-auto object-contain sm:h-9">
-                </span>
-                <span class="hidden leading-tight sm:block">
-                    <span class="block text-base font-extrabold text-emerald-900">PERPUSTAKAAN</span>
-                    <span class="block text-[11px] font-semibold tracking-wide text-emerald-600">UNIVERSITAS MUHAMMADIYAH LAMPUNG</span>
-                </span>
-            </a>
-            <nav class="hidden items-center gap-7 text-sm font-semibold text-emerald-900 lg:flex">
-                <a href="#beranda" class="text-emerald-700">Beranda</a>
-                <a href="#tentang" class="hover:text-emerald-600">Tentang Kami</a>
-                <a href="#koleksi" class="hover:text-emerald-600">Koleksi</a>
-                <a href="#ekatalog" class="hover:text-emerald-600">E-Katalog</a>
-                <a href="#fitur" class="hover:text-emerald-600">Layanan</a>
-                <a href="#kontak" class="hover:text-emerald-600">Kontak</a>
-            </nav>
-            <div class="flex items-center gap-2 sm:gap-3">
-                <a href="{{ route('login') }}" class="grid h-9 w-9 place-items-center rounded-full bg-white text-emerald-700 shadow-sm hover:bg-emerald-50 sm:h-11 sm:w-11">
-                    <x-icon name="search" class="h-5 w-5" />
-                </a>
-                <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-3 py-2 text-xs font-semibold text-white shadow-lg hover:bg-emerald-800 sm:gap-2 sm:px-5 sm:py-3 sm:text-sm">
-                    <x-icon name="user-check" class="h-4 w-4" /> Login<span class="hidden sm:inline">&nbsp;Mahasiswa</span>
-                </a>
-            </div>
-        </div>
-    </header>
+    {{-- ===== Navbar (komponen bersama — sama di semua halaman publik) ===== --}}
+    @include('partials.public-nav')
 
     {{-- ===== HERO ===== --}}
     @php
@@ -143,7 +124,7 @@
                                         @if (\App\Models\Setting::get('rektor_nama'))
                                             <p class="font-script text-xl text-white">{{ \App\Models\Setting::get('rektor_nama') }}</p>
                                         @endif
-                                        <p class="text-sm font-bold text-yellow-300">Rektor Universitas Muhammadiyah Lampung</p>
+                                        <p class="text-sm font-bold text-yellow-300">Kepala Perpustakaan Universitas Muhammadiyah Lampung</p>
                                     </div>
                                 </div>
                             </div>
@@ -182,31 +163,34 @@
         </div>
     </section>
 
-    {{-- ===== Pengurus Perpustakaan (slider) ===== --}}
+    {{-- ===== Pengurus Perpustakaan (slider berjalan — gaya Tim LP2M) ===== --}}
     @if ($pengurus->isNotEmpty())
         <section id="fitur" class="px-4 py-16 sm:px-6">
-            <div class="reveal mx-auto mb-8 max-w-6xl text-center">
+            <div class="reveal mx-auto mb-10 max-w-6xl text-center">
                 <span class="rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-900">Tim Kami</span>
                 <h2 class="mt-3 text-2xl font-bold text-emerald-900 sm:text-3xl">Pengurus Perpustakaan</h2>
                 <p class="mt-2 text-gray-500">Tim yang siap melayani kebutuhan literasi Anda.</p>
             </div>
             <div class="reveal mx-auto max-w-6xl">
-                <div class="swiper pengurusSwiper pb-12">
+                <div class="swiper pengurusSwiper pb-14">
                     <div class="swiper-wrapper">
                         @foreach ($pengurus as $p)
                             <div class="swiper-slide">
-                                <div class="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                                    <div class="aspect-[4/5] bg-emerald-50">
-                                        @if ($p->fotoUrl())
-                                            <img src="{{ $p->fotoUrl() }}" alt="{{ $p->nama }}" class="h-full w-full object-cover">
-                                        @else
-                                            <div class="grid h-full place-items-center text-5xl font-bold text-emerald-300">{{ strtoupper(substr($p->nama, 0, 1)) }}</div>
-                                        @endif
+                                <div class="flex flex-col items-center px-2 py-4 text-center transition hover:-translate-y-1">
+                                    {{-- Foto bundar berbingkai lengkung gradien hijau-kuning --}}
+                                    <div class="tim-ring rounded-full p-[6px] shadow-sm">
+                                        <div class="rounded-full bg-white p-[4px]">
+                                            <div class="aspect-square w-40 overflow-hidden rounded-full bg-emerald-50 sm:w-44">
+                                                @if ($p->fotoUrl())
+                                                    <img src="{{ $p->fotoUrl() }}" alt="{{ $p->nama }}" class="h-full w-full object-cover">
+                                                @else
+                                                    <div class="grid h-full place-items-center text-5xl font-bold text-emerald-300">{{ strtoupper(substr($p->nama, 0, 1)) }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="p-4 text-center">
-                                        <p class="font-bold text-emerald-950">{{ $p->nama }}</p>
-                                        <p class="mt-0.5 text-sm font-medium text-emerald-700">{{ $p->jabatan }}</p>
-                                    </div>
+                                    <p class="mt-5 text-base font-bold text-emerald-950">{{ $p->nama }}</p>
+                                    <p class="mt-1 text-sm text-gray-500">{{ $p->jabatan }}</p>
                                 </div>
                             </div>
                         @endforeach
@@ -226,15 +210,16 @@
             </div>
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 @forelse ($books as $book)
-                    <div class="reveal group overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                    <a href="{{ route('books.public', $book) }}" class="reveal group block overflow-hidden rounded-xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                         <div class="aspect-[3/4] bg-emerald-50">
                             <img src="{{ $book->cover_url }}" alt="{{ $book->judul }}" class="h-full w-full object-cover">
                         </div>
                         <div class="p-3">
-                            <h3 class="line-clamp-2 text-sm font-semibold text-gray-800">{{ $book->judul }}</h3>
+                            <h3 class="line-clamp-2 text-sm font-semibold text-gray-800 group-hover:text-emerald-700">{{ $book->judul }}</h3>
                             <p class="mt-0.5 text-xs text-gray-500">{{ $book->author?->nama }}</p>
+                            <span class="mt-1 inline-block text-[11px] font-semibold text-emerald-600">Lihat detail &rarr;</span>
                         </div>
-                    </div>
+                    </a>
                 @empty
                     <p class="col-span-full py-10 text-center text-gray-400">Belum ada koleksi.</p>
                 @endforelse
@@ -245,13 +230,13 @@
         </div>
     </section>
 
-    {{-- ===== E-Katalog ===== --}}
+    {{-- ===== E-Resources ===== --}}
     @if ($ekatalog->isNotEmpty())
         <section id="ekatalog" class="bg-emerald-50/60 py-16">
             <div class="mx-auto max-w-7xl px-6">
                 <div class="reveal mb-8 text-center">
-                    <span class="rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-900">E-Katalog</span>
-                    <h2 class="mt-3 text-2xl font-bold text-emerald-900 sm:text-3xl">Katalog Digital</h2>
+                    <span class="rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-900">E-Resources</span>
+                    <h2 class="mt-3 text-2xl font-bold text-emerald-900 sm:text-3xl">E-Resources Perpustakaan</h2>
                     <p class="mt-2 text-gray-500">Koleksi digital & sumber referensi online perpustakaan.</p>
                 </div>
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -304,20 +289,107 @@
     @php
         $kontakWa = \App\Models\Setting::waNumber();
         $kontakPesan = 'Assalamu\'alaikum, saya ingin bertanya tentang keanggotaan & peminjaman di Perpustakaan UML. Terima kasih 🙏';
+        $kAlamat = \App\Models\Setting::get('kontak_alamat');
+        $kTelepon = \App\Models\Setting::get('kontak_telepon');
+        $kEmail = \App\Models\Setting::get('kontak_email');
+        $kJam = \App\Models\Setting::get('kontak_jam');
+        $kIg = \App\Models\Setting::get('kontak_instagram');
+        $kFb = \App\Models\Setting::get('kontak_facebook');
+        $kMaps = \App\Models\Setting::get('kontak_maps');
+        $kMapsEmbed = $kMaps && str_contains($kMaps, '/embed');
+        $igUrl = $kIg ? (str_starts_with($kIg, 'http') ? $kIg : 'https://instagram.com/'.ltrim($kIg, '@')) : null;
     @endphp
     <section id="kontak" class="bg-white py-16">
-        <div class="reveal mx-auto max-w-3xl px-6 text-center">
-            <h2 class="text-2xl font-bold text-emerald-900 sm:text-3xl">Kontak Kami</h2>
-            <p class="mx-auto mt-3 max-w-xl text-gray-600"><span class="font-semibold text-emerald-800">Assalamu'alaikum</span> 🙏 Ada pertanyaan? Hubungi kami via WhatsApp.</p>
-            <div class="mx-auto mt-8 max-w-md rounded-2xl border border-emerald-100 bg-emerald-50 p-8 shadow-sm">
-                <p class="text-sm text-gray-500">WhatsApp Perpustakaan</p>
-                @if ($kontakWa)
-                    <p class="mt-1 text-2xl font-bold tracking-wide text-emerald-900">+{{ $kontakWa }}</p>
-                    <a href="https://wa.me/{{ $kontakWa }}?text={{ rawurlencode($kontakPesan) }}" target="_blank" rel="noopener"
-                       class="mt-5 inline-flex items-center gap-2 rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:bg-green-600">Chat via WhatsApp</a>
-                @else
-                    <p class="mt-1 text-sm text-gray-400">Nomor WhatsApp belum diatur admin.</p>
-                @endif
+        <div class="mx-auto max-w-6xl px-6">
+            <div class="reveal mb-10 text-center">
+                <span class="rounded-full bg-yellow-300 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-900">Hubungi Kami</span>
+                <h2 class="mt-3 text-2xl font-bold text-emerald-900 sm:text-3xl">Kontak Kami</h2>
+                <p class="mx-auto mt-2 max-w-xl text-gray-500"><span class="font-semibold text-emerald-800">Assalamu'alaikum</span> 🙏 Ada pertanyaan? Silakan hubungi kami.</p>
+            </div>
+
+            <div class="reveal grid gap-6 lg:grid-cols-2">
+                {{-- Info kontak --}}
+                <div class="space-y-4">
+                    @if ($kAlamat)
+                        <div class="flex items-start gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700"><x-icon name="home" class="h-5 w-5" /></span>
+                            <div><p class="text-sm font-semibold text-emerald-900">Alamat</p><p class="mt-0.5 text-sm text-gray-600">{{ $kAlamat }}</p></div>
+                        </div>
+                    @endif
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        @if ($kTelepon)
+                            <div class="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700"><x-icon name="phone" class="h-5 w-5" /></span>
+                                <div class="min-w-0"><p class="text-sm font-semibold text-emerald-900">Telepon</p><p class="mt-0.5 truncate text-sm text-gray-600">{{ $kTelepon }}</p></div>
+                            </div>
+                        @endif
+                        @if ($kEmail)
+                            <a href="mailto:{{ $kEmail }}" class="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 hover:border-emerald-300">
+                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700"><x-icon name="bell" class="h-5 w-5" /></span>
+                                <div class="min-w-0"><p class="text-sm font-semibold text-emerald-900">Email</p><p class="mt-0.5 truncate text-sm text-gray-600">{{ $kEmail }}</p></div>
+                            </a>
+                        @endif
+                        @if ($kJam)
+                            <div class="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700"><x-icon name="clock" class="h-5 w-5" /></span>
+                                <div class="min-w-0"><p class="text-sm font-semibold text-emerald-900">Jam Operasional</p><p class="mt-0.5 text-sm text-gray-600">{{ $kJam }}</p></div>
+                            </div>
+                        @endif
+                        @if ($kontakWa)
+                            <div class="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5">
+                                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2z"/></svg>
+                                </span>
+                                <div class="min-w-0"><p class="text-sm font-semibold text-emerald-900">WhatsApp</p><p class="mt-0.5 truncate text-sm text-gray-600">+{{ $kontakWa }}</p></div>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 pt-1">
+                        @if ($kontakWa)
+                            <a href="https://wa.me/{{ $kontakWa }}?text={{ rawurlencode($kontakPesan) }}" target="_blank" rel="noopener"
+                               class="inline-flex items-center gap-2 rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-white hover:bg-green-600">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2z"/></svg>
+                                Chat via WhatsApp
+                            </a>
+                        @endif
+                        @if ($igUrl)
+                            <a href="{{ $igUrl }}" target="_blank" rel="noopener" aria-label="Instagram"
+                               class="grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                            </a>
+                        @endif
+                        @if ($kFb)
+                            <a href="{{ $kFb }}" target="_blank" rel="noopener" aria-label="Facebook"
+                               class="grid h-11 w-11 place-items-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2c0-.6.4-1 1-1z"/></svg>
+                            </a>
+                        @endif
+                    </div>
+
+                    @unless ($kAlamat || $kTelepon || $kEmail || $kJam || $kontakWa)
+                        <p class="text-sm text-gray-400">Informasi kontak belum diatur admin.</p>
+                    @endunless
+                </div>
+
+                {{-- Peta / lokasi --}}
+                <div>
+                    @if ($kMapsEmbed)
+                        <div class="aspect-[4/3] overflow-hidden rounded-2xl border border-emerald-100 shadow-sm lg:h-full">
+                            <iframe src="{{ $kMaps }}" class="h-full w-full" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+                        </div>
+                    @elseif ($kMaps)
+                        <a href="{{ $kMaps }}" target="_blank" rel="noopener"
+                           class="grid aspect-[4/3] place-items-center rounded-2xl border border-emerald-100 bg-emerald-50 text-center shadow-sm hover:bg-emerald-100 lg:h-full">
+                            <span>
+                                <span class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700"><x-icon name="home" class="h-6 w-6" /></span>
+                                <span class="mt-3 block text-sm font-semibold text-emerald-800">Lihat Lokasi di Google Maps &rarr;</span>
+                            </span>
+                        </a>
+                    @else
+                        <div class="grid aspect-[4/3] place-items-center rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/50 text-sm text-emerald-400 lg:h-full">Lokasi belum diatur</div>
+                    @endif
+                </div>
             </div>
         </div>
     </section>
@@ -360,8 +432,8 @@
                     speed: 700,
                     spaceBetween: 20,
                     slidesPerView: 1.2,
-                    autoplay: { delay: 3000, disableOnInteraction: false },
-                    breakpoints: { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 4 } },
+                    autoplay: { delay: 2800, disableOnInteraction: false },
+                    breakpoints: { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } },
                     pagination: { el: '.pengurusSwiper .swiper-pagination', clickable: true },
                 });
             }

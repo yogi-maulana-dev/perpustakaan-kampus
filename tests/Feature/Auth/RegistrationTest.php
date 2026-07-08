@@ -37,9 +37,10 @@ class RegistrationTest extends TestCase
             ->set('kode_prodi', 'IF')
             ->set('angkatan', '2024')
             ->set('no_hp', '081234567890')
-            ->set('ktm', UploadedFile::fake()->image('ktm.jpg'));
+            ->set('ktm', UploadedFile::fake()->image('ktm.jpg'))
+            ->set('foto', UploadedFile::fake()->image('foto.jpg', 300, 400));
 
-        $component->call('register');
+        $component->set('captcha', (string) ($component->get('a') + $component->get('b')))->call('register');
 
         // Tidak auto-login: menunggu approval, diarahkan ke halaman login.
         $component->assertRedirect(route('login'));
@@ -52,6 +53,8 @@ class RegistrationTest extends TestCase
         $this->assertEquals('2024999001', $user->mahasiswaProfile->nim);
         $this->assertNotNull($user->mahasiswaProfile->ktm_path);
         Storage::disk('public')->assertExists($user->mahasiswaProfile->ktm_path);
+        $this->assertNotNull($user->mahasiswaProfile->foto);
+        Storage::disk('public')->assertExists($user->mahasiswaProfile->foto);
 
         // Kode prodi tersimpan & nama fakultas/prodi terderivasi dari config.
         $this->assertEquals('IF', $user->mahasiswaProfile->kode_prodi);

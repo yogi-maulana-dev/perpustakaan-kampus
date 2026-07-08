@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Pengingat jatuh tempo & penandaan keterlambatan setiap hari pukul 08:00.
 Schedule::command('loans:remind')->dailyAt('08:00');
+
+// Rekap log aktivitas ke Excel (>3 hari) + hapus paksa (>4 hari) tiap hari 01:00.
+Schedule::command('logs:archive')->dailyAt('01:00');

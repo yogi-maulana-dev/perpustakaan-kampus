@@ -12,7 +12,7 @@
         $tipe = strtoupper($profile->tipe->label());
         $nomor = $profile->nomorIdentitas() ?: 'UML'.str_pad((string) $user->id, 8, '0', STR_PAD_LEFT);
         $foto = $profile->foto ? Storage::disk('public')->url($profile->foto) : null;
-        $berlaku = $user->created_at->copy()->addYears(5)->format('d-m-Y');
+        $berlaku = $profile->kartuBerlakuSampai()?->format('d-m-Y') ?? '-';
         $prodi = trim(($profile->jenjang ? $profile->jenjang.' ' : '').$profile->program_studi);
     @endphp
     <style>
@@ -91,7 +91,10 @@
             </div>
         </div>
 
-        <p class="no-print mt-4 text-center text-xs text-gray-400">Tunjukkan kartu ini saat meminjam buku di perpustakaan.</p>
+        {{-- SISI BELAKANG (tata tertib & pengesahan) --}}
+        @include('partials.kartu-belakang', ['class' => 'mx-auto mt-5 w-[420px] max-w-full'])
+
+        <p class="no-print mt-4 text-center text-xs text-gray-400">Tunjukkan kartu ini saat meminjam buku di perpustakaan. Cetak bolak-balik: sisi atas bagian depan, sisi bawah bagian belakang.</p>
     </div>
 
     <script>

@@ -80,10 +80,10 @@ new #[Layout('layouts.dashboard')] class extends Component {
 
         if ($this->editingId) {
             Ekatalog::findOrFail($this->editingId)->update($payload);
-            $msg = 'E-Katalog diperbarui.';
+            $msg = 'E-Resources diperbarui.';
         } else {
             Ekatalog::create($payload);
-            $msg = 'E-Katalog ditambahkan.';
+            $msg = 'E-Resources ditambahkan.';
         }
 
         $this->showForm = false;
@@ -104,7 +104,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
             Storage::disk('public')->delete($e->gambar);
         }
         $e->delete();
-        $this->dispatch('toast', type: 'success', message: 'E-Katalog dihapus.');
+        $this->dispatch('toast', type: 'success', message: 'E-Resources dihapus.');
     }
 
     public function with(): array
@@ -116,10 +116,10 @@ new #[Layout('layouts.dashboard')] class extends Component {
 <div>
     <div class="mb-4 flex items-center justify-between gap-3">
         <div class="rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
-            <span class="font-semibold">E-Katalog</span> tampil di halaman depan. Isi judul, deskripsi, tautan koleksi digital, & sampul.
+            <span class="font-semibold">E-Resources</span> tampil di halaman depan. Isi judul, deskripsi, tautan koleksi digital, & sampul.
         </div>
         <button wire:click="create" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
-            <x-icon name="plus" class="h-4 w-4" /> Tambah E-Katalog
+            <x-icon name="plus" class="h-4 w-4" /> Tambah E-Resources
         </button>
     </div>
 
@@ -145,7 +145,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
                 </div>
             </div>
         @empty
-            <div class="col-span-full rounded-xl border bg-white py-16 text-center text-gray-400">Belum ada E-Katalog. Klik "Tambah E-Katalog".</div>
+            <div class="col-span-full rounded-xl border bg-white py-16 text-center text-gray-400">Belum ada E-Resources. Klik "Tambah E-Resources".</div>
         @endforelse
     </div>
 
@@ -153,7 +153,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
         <div class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:items-center">
             <div class="my-8 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
                 <div class="mb-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-800">{{ $editingId ? 'Edit' : 'Tambah' }} E-Katalog</h3>
+                    <h3 class="text-lg font-semibold text-gray-800">{{ $editingId ? 'Edit' : 'Tambah' }} E-Resources</h3>
                     <button wire:click="$set('showForm', false)" class="text-gray-400 hover:text-gray-600"><x-icon name="x" class="h-5 w-5" /></button>
                 </div>
                 <form wire:submit="save" class="space-y-4">

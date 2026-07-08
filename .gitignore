@@ -44,3 +44,14 @@ auth.json
 Homestead.yaml
 Homestead.json
 /.vagrant
+
+# Claude
+.claude/
+
+# ZIP files
+*.zip
+
+/database/*.sqlite*
+*/database/*.sql
+*.sql
+*.sqlite

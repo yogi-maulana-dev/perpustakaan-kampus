@@ -1,11 +1,14 @@
 <?php
 
+use App\Livewire\Concerns\WithCaptcha;
 use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    use WithCaptcha;
+
     public string $email = '';
 
     /**
@@ -13,6 +16,8 @@ new #[Layout('layouts.guest')] class extends Component
      */
     public function sendPasswordResetLink(): void
     {
+        $this->assertCaptcha();
+
         $this->validate([
             'email' => ['required', 'string', 'email'],
         ]);
@@ -53,6 +58,10 @@ new #[Layout('layouts.guest')] class extends Component
             <x-input-label for="email" value="Email" />
             <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        </div>
+
+        <div class="mt-4">
+            <x-captcha-field :a="$a" :b="$b" />
         </div>
 
         {{-- Progress bar selama proses kirim email --}}

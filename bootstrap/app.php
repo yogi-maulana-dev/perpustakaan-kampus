@@ -18,7 +18,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'active' => \App\Http\Middleware\EnsureAccountActive::class,
             'member.foto' => \App\Http\Middleware\EnsureMemberHasPhoto::class,
+            'member.valid' => \App\Http\Middleware\EnsureMembershipValid::class,
+            'block.ip' => \App\Http\Middleware\BlockAccessFromIp::class,
         ]);
+
+        // Tolak seluruh request web dari IP yang diblokir Super Admin.
+        $middleware->appendToGroup('web', \App\Http\Middleware\BlockAccessFromIp::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

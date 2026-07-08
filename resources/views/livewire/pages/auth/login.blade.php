@@ -1,31 +1,29 @@
 <?php
 
+use App\Livewire\Concerns\WithCaptcha;
 use App\Livewire\Forms\LoginForm;
+use App\Models\BlockedIp;
+use App\Models\IpClearance;
+use App\Models\LoginAttempt;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    use WithCaptcha;
+
     public LoginForm $form;
 
-    public int $a = 0;
-    public int $b = 0;
-    public string $captcha = '';
+    /** IP saat ini ditandai (banyak percobaan), belum diblokir, dan belum dibebaskan. */
+    public bool $ipSuspicious = false;
 
     public function mount(): void
     {
-        $this->newCaptcha();
-    }
-
-    /** Buat soal captcha baru & simpan jawabannya di session (tidak diekspos ke client). */
-    public function newCaptcha(): void
-    {
-        $this->a = random_int(1, 9);
-        $this->b = random_int(1, 9);
-        $this->captcha = '';
-        session(['login_captcha' => $this->a + $this->b]);
+        $ip = request()->ip();
+        $this->ipSuspicious = ! BlockedIp::isBlocked($ip)
+            && ! IpClearance::isCleared($ip)
+            && LoginAttempt::whereDate('created_at', today())->where('ip_address', $ip)->count() > 5;
     }
 
     /**
@@ -34,13 +32,7 @@ new #[Layout('layouts.guest')] class extends Component
     public function login(): void
     {
         // Verifikasi captcha lebih dulu.
-        if ((int) $this->captcha !== (int) session('login_captcha')) {
-            $this->newCaptcha();
-
-            throw ValidationException::withMessages([
-                'captcha' => 'Jawaban verifikasi keamanan salah. Silakan coba lagi.',
-            ]);
-        }
+        $this->assertCaptcha();
 
         $this->validate();
 
@@ -78,6 +70,12 @@ new #[Layout('layouts.guest')] class extends Component
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    @if ($ipSuspicious)
+        <div class="mb-4 text-center" wire:ignore>
+            <x-location-verify :email="$form->email" label="Buka" />
+        </div>
+    @endif
+
     <form wire:submit="login">
         <!-- Email Address -->
         <div>
@@ -99,18 +97,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         <!-- Captcha -->
         <div class="mt-4">
-            <x-input-label for="captcha" value="Verifikasi Keamanan" />
-            <div class="mt-1 flex items-stretch gap-2">
-                <span class="grid shrink-0 select-none place-items-center rounded-lg bg-emerald-100 px-4 text-base font-bold tracking-wider text-emerald-800 whitespace-nowrap">
-                    {{ $a }} + {{ $b }} = ?
-                </span>
-                <x-text-input wire:model="captcha" id="captcha" class="block min-w-0 flex-1" type="text" inputmode="numeric" placeholder="Jawaban" required />
-                <button type="button" wire:click="newCaptcha" title="Ganti soal"
-                        class="grid w-11 shrink-0 place-items-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-                </button>
-            </div>
-            <x-input-error :messages="$errors->get('captcha')" class="mt-2" />
+            <x-captcha-field :a="$a" :b="$b" />
         </div>
 
         <!-- Remember Me -->

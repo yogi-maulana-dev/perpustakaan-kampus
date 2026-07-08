@@ -89,8 +89,8 @@ new #[Layout('layouts.dashboard')] class extends Component {
             'loans' => Loan::with(['user', 'details.book'])
                 ->active()
                 ->when($this->search, fn ($q) => $q->where(fn ($s) => $s
-                    ->where('kode_pinjam', 'ilike', "%{$this->search}%")
-                    ->orWhereHas('user', fn ($u) => $u->where('name', 'ilike', "%{$this->search}%"))))
+                    ->whereLike('kode_pinjam', "%{$this->search}%")
+                    ->orWhereHas('user', fn ($u) => $u->whereLike('name', "%{$this->search}%"))))
                 ->orderBy('tanggal_jatuh_tempo')
                 ->paginate(10),
         ];

@@ -2,6 +2,7 @@
 
 use App\Enums\MemberType;
 use App\Enums\UserStatus;
+use App\Livewire\Concerns\WithCaptcha;
 use App\Models\MahasiswaProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 
 new #[Layout('layouts.guest')] class extends Component {
-    use WithFileUploads;
+    use WithCaptcha, WithFileUploads;
 
     public string $tipe = 'mahasiswa';
     public string $name = '';
@@ -22,6 +23,7 @@ new #[Layout('layouts.guest')] class extends Component {
     public string $password_confirmation = '';
     public string $no_hp = '';
     public $ktm = null;
+    public $foto = null;
 
     // Mahasiswa / Dosen akademik
     public string $fakultas = '';     // kode fakultas (key config akademik)
@@ -56,6 +58,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
     public function register(): void
     {
+        $this->assertCaptcha();
+
         $isMhs = $this->tipe === 'mahasiswa';
         $isDosen = $this->tipe === 'dosen';
         $isUmum = $this->tipe === 'umum';
@@ -73,6 +77,7 @@ new #[Layout('layouts.guest')] class extends Component {
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
             'no_hp' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
             'ktm' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+            'foto' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
 
             'fakultas' => [Rule::requiredIf($butuhAkademik), 'nullable', Rule::in(array_keys($faculties))],
             'kode_prodi' => [Rule::requiredIf($butuhAkademik), 'nullable', Rule::in($prodiCodes)],
@@ -90,6 +95,7 @@ new #[Layout('layouts.guest')] class extends Component {
         ], [], [
             'no_hp' => 'nomor HP',
             'ktm' => 'kartu identitas',
+            'foto' => 'pas foto',
             'nim' => 'NIM',
             'nidn' => 'NIDN',
             'nbm' => 'NBM',
@@ -109,8 +115,9 @@ new #[Layout('layouts.guest')] class extends Component {
         }
 
         $ktmPath = $this->ktm->store('ktm', 'public');
+        $fotoPath = $this->foto->store('foto-anggota', 'public');
 
-        DB::transaction(function () use ($validated, $ktmPath, $namaFakultas, $namaProdi, $jenjang): void {
+        DB::transaction(function () use ($validated, $ktmPath, $fotoPath, $namaFakultas, $namaProdi, $jenjang): void {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -137,6 +144,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 'instansi' => $nullIfEmpty($validated['instansi'] ?? null),
                 'no_hp' => $validated['no_hp'],
                 'ktm_path' => $ktmPath,
+                'foto' => $fotoPath,
             ]);
         });
 
@@ -153,7 +161,14 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
     <h2 class="mb-1 text-lg font-semibold text-emerald-900">Pendaftaran Anggota</h2>
-    <p class="mb-4 text-sm text-gray-500">Pilih jenis keanggotaan, lalu lengkapi data. Akun aktif setelah disetujui pustakawan.</p>
+    <p class="mb-3 text-sm text-gray-500">Pilih jenis keanggotaan, lalu lengkapi data. Akun aktif setelah disetujui pustakawan.</p>
+
+    {{-- Panduan anggota (manual book) sebelum mendaftar --}}
+    <a href="{{ route('panduan.anggota') }}" target="_blank"
+       class="mb-5 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200 hover:bg-emerald-100">
+        <x-icon name="doc" class="h-4 w-4 shrink-0" />
+        Baru pertama kali? Baca <span class="underline">Panduan Anggota</span> dulu — cara daftar sampai pinjam buku.
+    </a>
 
     {{-- Pilih tipe --}}
     <div class="mb-5 grid grid-cols-3 gap-2">
@@ -303,11 +318,40 @@ new #[Layout('layouts.guest')] class extends Component {
             <x-input-error :messages="$errors->get('ktm')" class="mt-2" />
         </div>
 
+        {{-- Pas foto 3×4 (untuk kartu anggota) --}}
+        <div class="mt-4">
+            <x-input-label for="foto" value="Upload Pas Foto 3×4 (JPG/PNG, maks 2MB)" />
+            <p class="mt-0.5 text-xs text-gray-500">Dipakai untuk kartu anggota. Disarankan pas foto 3×4 (mis. 300 × 400 px), wajah jelas & latar polos.</p>
+            <div class="mt-2 flex items-start gap-4">
+                <div class="h-32 w-24 shrink-0 overflow-hidden rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50">
+                    @if ($foto)
+                        <img src="{{ $foto->temporaryUrl() }}" class="h-full w-full object-cover" />
+                    @else
+                        <div class="grid h-full place-items-center text-center text-xs text-emerald-400">Pratinjau<br>3 × 4</div>
+                    @endif
+                </div>
+                <div class="flex-1">
+                    <input wire:model="foto" id="foto" type="file" accept="image/png,image/jpeg"
+                           class="block w-full text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100" />
+                    <div wire:loading wire:target="foto" class="mt-1 text-xs text-gray-500">Mengunggah foto…</div>
+                    <x-input-error :messages="$errors->get('foto')" class="mt-2" />
+                    {{-- Tombol + modal tutorial ganti ukuran foto (dikelola Super Admin) --}}
+                    <div class="mt-2">
+                        @include('partials.modal-tutorial-foto', ['autoOpen' => false])
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <x-captcha-field :a="$a" :b="$b" />
+        </div>
+
         <div class="flex items-center justify-end mt-6">
             <a class="text-sm text-gray-600 underline rounded-md hover:text-gray-900" href="{{ route('login') }}" wire:navigate>
                 Sudah punya akun?
             </a>
-            <button type="submit" wire:loading.attr="disabled" wire:target="register, ktm"
+            <button type="submit" wire:loading.attr="disabled" wire:target="register, ktm, foto"
                     class="ms-4 inline-flex items-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
                 Daftar
             </button>

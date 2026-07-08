@@ -119,8 +119,8 @@ new #[Layout('layouts.dashboard')] class extends Component {
         $query = Loan::with(['user', 'details.book', 'fine'])
             ->when($this->status !== 'all', fn ($q) => $q->where('status', $this->status))
             ->when($this->search, fn ($q) => $q->where(fn ($s) => $s
-                ->where('kode_pinjam', 'ilike', "%{$this->search}%")
-                ->orWhereHas('user', fn ($u) => $u->where('name', 'ilike', "%{$this->search}%"))))
+                ->whereLike('kode_pinjam', "%{$this->search}%")
+                ->orWhereHas('user', fn ($u) => $u->whereLike('name', "%{$this->search}%"))))
             ->latest();
 
         return [

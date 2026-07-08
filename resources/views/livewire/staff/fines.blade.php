@@ -65,7 +65,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
         return [
             'fines' => Fine::with(['user', 'loan'])
                 ->when($this->status !== 'all', fn ($q) => $q->where('status', $this->status))
-                ->when($this->search, fn ($q) => $q->whereHas('user', fn ($u) => $u->where('name', 'ilike', "%{$this->search}%")))
+                ->when($this->search, fn ($q) => $q->whereHas('user', fn ($u) => $u->whereLike('name', "%{$this->search}%")))
                 ->latest()->paginate(10),
             'totalBelum' => Fine::where('status', FineStatus::BelumBayar)->sum('total_denda'),
         ];

@@ -23,6 +23,16 @@ new #[Layout('layouts.dashboard')] class extends Component {
     public $rektor = null;
     public string $rektor_nama = '';
 
+    // Kartu anggota — masa berlaku & sisi belakang
+    public int $masa_berlaku_kartu = 5;
+    public string $wa_perpanjangan = '';
+    public string $kartu_kota = '';
+    public string $kartu_jabatan = '';
+    public string $kartu_nama = '';
+    public string $kartu_nip = '';
+    public string $kartu_tata_tertib = '';
+    public $ttd = null;
+
     // Email / SMTP
     public string $mail_host = '';
     public string $mail_port = '';
@@ -36,7 +46,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->hasRole(RoleName::SuperAdmin->value), 403);
+        abort_unless(auth()->user()->hasAnyRole(RoleName::managerRoles()), 403);
         $this->tarif_denda = (int) Setting::get('tarif_denda', 1000);
         $this->durasi_pinjam = (int) Setting::get('durasi_pinjam', 7);
         $this->max_pinjam = (int) Setting::get('max_pinjam', 3);
@@ -47,6 +57,14 @@ new #[Layout('layouts.dashboard')] class extends Component {
         $this->wa_number = (string) Setting::get('wa_number', '');
         $this->wa_template = (string) Setting::get('wa_template', '');
         $this->rektor_nama = (string) Setting::get('rektor_nama', '');
+
+        $this->masa_berlaku_kartu = (int) Setting::get('masa_berlaku_kartu', 5);
+        $this->wa_perpanjangan = (string) Setting::get('wa_perpanjangan', '');
+        $this->kartu_kota = (string) Setting::get('kartu_kota', 'Bandar Lampung');
+        $this->kartu_jabatan = (string) Setting::get('kartu_jabatan', 'Kepala Perpustakaan');
+        $this->kartu_nama = (string) Setting::get('kartu_nama', '');
+        $this->kartu_nip = (string) Setting::get('kartu_nip', '');
+        $this->kartu_tata_tertib = (string) Setting::get('kartu_tata_tertib', Setting::kartuTataTertibDefault());
 
         $this->mail_host = (string) Setting::get('mail_host', config('mail.mailers.smtp.host'));
         $this->mail_port = (string) Setting::get('mail_port', config('mail.mailers.smtp.port'));
@@ -141,6 +159,58 @@ new #[Layout('layouts.dashboard')] class extends Component {
         }
         Setting::set('rektor_path', null);
         $this->dispatch('toast', type: 'success', message: 'Foto rektor dihapus.');
+    }
+
+    public function saveKartu(): void
+    {
+        $this->validate([
+            'masa_berlaku_kartu' => ['required', 'integer', 'min:1', 'max:20'],
+            'wa_perpanjangan' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
+            'kartu_kota' => ['required', 'string', 'max:100'],
+            'kartu_jabatan' => ['required', 'string', 'max:150'],
+            'kartu_nama' => ['nullable', 'string', 'max:150'],
+            'kartu_nip' => ['nullable', 'string', 'max:50'],
+            'kartu_tata_tertib' => ['required', 'string', 'max:2000'],
+            'ttd' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:1024'],
+        ], [], [
+            'masa_berlaku_kartu' => 'masa berlaku kartu',
+            'wa_perpanjangan' => 'nomor WhatsApp perpanjangan',
+            'kartu_kota' => 'kota',
+            'kartu_jabatan' => 'jabatan',
+            'kartu_nama' => 'nama',
+            'kartu_nip' => 'NIP',
+            'kartu_tata_tertib' => 'tata tertib',
+            'ttd' => 'tanda tangan',
+        ]);
+
+        if ($this->ttd) {
+            $old = Setting::get('kartu_ttd_path');
+            if ($old && Storage::disk('public')->exists($old)) {
+                Storage::disk('public')->delete($old);
+            }
+            Setting::set('kartu_ttd_path', $this->ttd->store('ttd', 'public'));
+        }
+
+        Setting::set('masa_berlaku_kartu', $this->masa_berlaku_kartu);
+        Setting::set('wa_perpanjangan', trim($this->wa_perpanjangan));
+        Setting::set('kartu_kota', trim($this->kartu_kota));
+        Setting::set('kartu_jabatan', trim($this->kartu_jabatan));
+        Setting::set('kartu_nama', trim($this->kartu_nama));
+        Setting::set('kartu_nip', trim($this->kartu_nip));
+        Setting::set('kartu_tata_tertib', trim($this->kartu_tata_tertib));
+
+        $this->ttd = null;
+        $this->dispatch('toast', type: 'success', message: 'Pengaturan kartu anggota disimpan.');
+    }
+
+    public function resetTtd(): void
+    {
+        $old = Setting::get('kartu_ttd_path');
+        if ($old && Storage::disk('public')->exists($old)) {
+            Storage::disk('public')->delete($old);
+        }
+        Setting::set('kartu_ttd_path', null);
+        $this->dispatch('toast', type: 'success', message: 'Tanda tangan dihapus.');
     }
 
     public function save(): void
@@ -267,6 +337,100 @@ new #[Layout('layouts.dashboard')] class extends Component {
                 </div>
             </div>
         </div>
+    </div>
+
+    {{-- Kartu anggota — sisi belakang --}}
+    <div class="rounded-xl border bg-white p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-gray-800">Kartu Anggota — Sisi Belakang</h3>
+        <p class="mt-1 text-sm text-gray-500">Tata tertib & bagian pengesahan (kota, tanggal, nama, tanda tangan, NIP) yang tampil
+            di sisi belakang kartu saat cetak kartu anggota. Tanggal mengikuti tanggal saat kartu dicetak.</p>
+
+        <form wire:submit="saveKartu" class="mt-6 space-y-4">
+            <div class="rounded-lg bg-emerald-50 p-4">
+                <label class="block text-sm font-medium text-gray-700">Masa Berlaku Keanggotaan (tahun)</label>
+                <input wire:model="masa_berlaku_kartu" type="number" min="1" max="20"
+                       class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" />
+                @error('masa_berlaku_kartu') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                <p class="mt-1 text-xs text-emerald-700">Dihitung sejak tanggal daftar (atau sejak diperpanjang). Anggota yang lewat masa berlaku
+                    tidak bisa mengakses akun sampai kartunya diperpanjang petugas di menu <strong>Data Anggota</strong>.</p>
+
+                <div class="mt-3">
+                    <label class="block text-sm font-medium text-gray-700">Nomor WhatsApp Perpanjangan Kartu</label>
+                    <input wire:model="wa_perpanjangan" type="text" placeholder="0812xxxxxxxx atau 62812xxxxxxxx"
+                           class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" />
+                    @error('wa_perpanjangan') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                    <p class="mt-1 text-xs text-gray-400">Dipakai tombol "Hubungi Staff via WhatsApp" di halaman keanggotaan kadaluarsa.
+                        Kosongkan untuk memakai Nomor WhatsApp Perpustakaan (di bagian Parameter Peminjaman & Denda).</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Tata Tertib (satu aturan per baris)</label>
+                <textarea wire:model="kartu_tata_tertib" rows="6"
+                          class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500"></textarea>
+                @error('kartu_tata_tertib') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                <p class="mt-1 text-xs text-gray-400">Setiap baris otomatis diberi nomor urut pada kartu.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Kota</label>
+                    <input wire:model="kartu_kota" type="text" placeholder="Bandar Lampung"
+                           class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" />
+                    @error('kartu_kota') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Jabatan</label>
+                    <input wire:model="kartu_jabatan" type="text" placeholder="Kepala Perpustakaan"
+                           class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" />
+                    @error('kartu_jabatan') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nama (beserta gelar)</label>
+                    <input wire:model="kartu_nama" type="text" placeholder="Dr. H. Nama Kepala, M.Pd."
+                           class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" />
+                    @error('kartu_nama') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">NIP</label>
+                    <input wire:model="kartu_nip" type="text" placeholder="19xxxxxxxxxxxxxxxxx"
+                           class="mt-1 w-full rounded-lg border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" />
+                    @error('kartu_nip') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Gambar Tanda Tangan (opsional, PNG transparan)</label>
+                <div class="mt-1 flex items-center gap-3">
+                    @php $ttdSaved = \App\Models\Setting::kartuBelakang()['ttd_url']; @endphp
+                    <div class="grid h-16 w-28 shrink-0 place-items-center overflow-hidden rounded-lg border bg-gray-50">
+                        @if ($ttd)
+                            <img src="{{ $ttd->temporaryUrl() }}" class="max-h-full max-w-full object-contain" />
+                        @elseif ($ttdSaved)
+                            <img src="{{ $ttdSaved }}" class="max-h-full max-w-full object-contain" onerror="this.remove()" />
+                        @else
+                            <span class="px-2 text-center text-[10px] text-gray-400">Belum ada tanda tangan</span>
+                        @endif
+                    </div>
+                    <div class="flex-1">
+                        <input wire:model="ttd" type="file" accept="image/png,image/jpeg,image/webp"
+                               class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100" />
+                        <div wire:loading wire:target="ttd" class="mt-1 text-xs text-gray-500">Mengunggah…</div>
+                        @error('ttd') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                        <p class="mt-1 text-xs text-gray-400">Kosongkan bila tanda tangan dilakukan manual setelah kartu dicetak.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 border-t pt-4">
+                <button type="submit" wire:loading.attr="disabled" wire:target="saveKartu,ttd"
+                        class="rounded-lg bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-50">Simpan Kartu</button>
+                @if ($ttdSaved)
+                    <button type="button" wire:click="resetTtd" wire:confirm="Hapus gambar tanda tangan?"
+                            class="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50">Hapus Tanda Tangan</button>
+                @endif
+            </div>
+        </form>
     </div>
 
     <div class="rounded-xl border bg-white p-6 shadow-sm">

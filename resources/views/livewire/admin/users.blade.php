@@ -29,7 +29,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->hasRole(RoleName::SuperAdmin->value), 403);
+        abort_unless(auth()->user()->hasAnyRole(RoleName::managerRoles()), 403);
     }
 
     public function updatingSearch(): void { $this->resetPage(); }
@@ -100,8 +100,8 @@ new #[Layout('layouts.dashboard')] class extends Component {
             'users' => User::with('roles')
                 ->whereHas('roles', fn ($r) => $r->whereIn('name', RoleName::staffRoles()))
                 ->when($this->search, fn ($q) => $q->where(fn ($s) => $s
-                    ->where('name', 'ilike', "%{$this->search}%")
-                    ->orWhere('email', 'ilike', "%{$this->search}%")))
+                    ->whereLike('name', "%{$this->search}%")
+                    ->orWhereLike('email', "%{$this->search}%")))
                 ->when($this->role, fn ($q) => $q->whereHas('roles', fn ($r) => $r->where('name', $this->role)))
                 ->latest()->paginate(10),
             'roles' => collect(RoleName::staffRoles()),

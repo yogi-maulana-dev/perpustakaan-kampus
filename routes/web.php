@@ -17,7 +17,42 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::middleware(['auth', 'active', 'member.foto'])->group(function () {
+// Detail buku publik (bisa dilihat sebelum login) — pakai UUID agar id tidak bisa ditebak.
+Route::get('koleksi/{book:uuid}', function (\App\Models\Book $book) {
+    $book->load(['author', 'publisher', 'category', 'shelf']);
+
+    $related = \App\Models\Book::with('author')
+        ->where('category_id', $book->category_id)
+        ->where('id', '!=', $book->id)
+        ->latest()->take(6)->get();
+
+    return view('books.show', ['book' => $book, 'related' => $related]);
+})->name('books.public');
+
+// Manual book / panduan penggunaan untuk anggota (publik).
+Route::view('panduan-anggota', 'panduan-anggota')->name('panduan.anggota');
+
+// Profil perpustakaan (publik).
+Route::view('profil/visi-misi', 'profil.visi-misi')->name('profil.visi-misi');
+Route::view('profil/sejarah', 'profil.sejarah')->name('profil.sejarah');
+Route::view('profil/struktur-organisasi', 'profil.struktur-organisasi')->name('profil.struktur-organisasi');
+
+// Berbagi lokasi (dari halaman login saat IP mencurigakan / halaman Akses Dibatasi).
+Route::post('verifikasi-lokasi', [\App\Http\Controllers\LocationController::class, 'store'])
+    ->middleware('throttle:10,1')->name('location.share');
+
+// Pemberitahuan keanggotaan kadaluarsa (di luar grup agar tidak saling redirect).
+Route::get('keanggotaan-kadaluarsa', function () {
+    $profile = auth()->user()->mahasiswaProfile;
+
+    if (! $profile || ! $profile->kartuKadaluarsa()) {
+        return redirect()->route('dashboard');
+    }
+
+    return view('membership-expired', ['profile' => $profile]);
+})->middleware(['auth', 'active'])->name('membership.expired');
+
+Route::middleware(['auth', 'active', 'member.valid', 'member.foto'])->group(function () {
     Volt::route('dashboard', 'dashboard')->name('dashboard');
 
     Volt::route('profile', 'profile.index')->name('profile');
@@ -53,8 +88,7 @@ Route::middleware(['auth', 'active', 'member.foto'])->group(function () {
         Volt::route('penerbit', 'staff.publishers')->name('publishers.index');
         Volt::route('rak', 'staff.shelves')->name('shelves.index');
         Volt::route('slider', 'admin.sliders')->name('sliders.index');
-        Volt::route('pengurus', 'admin.pengurus')->name('pengurus.index');
-        Volt::route('e-katalog', 'admin.ekatalog')->name('ekatalog.index');
+        Volt::route('e-resources', 'admin.e-resources')->name('ekatalog.index');
     });
 
     // ----- Transaksi (Tahap 5) -----
@@ -78,10 +112,26 @@ Route::middleware(['auth', 'active', 'member.foto'])->group(function () {
         });
     });
 
-    // ----- Administrasi -----
-    Route::middleware('role:Super Admin')->group(function () {
+    // ----- Administrasi (Super Admin & Admin) -----
+    Route::middleware('role:Super Admin|Admin')->group(function () {
+        Volt::route('profil', 'admin.profil')->name('profil.index');
+        Volt::route('pengurus', 'admin.pengurus')->name('pengurus.index');
+        Volt::route('kontak', 'admin.kontak')->name('kontak.index');
         Volt::route('users', 'admin.users')->name('users.index');
         Volt::route('pengaturan', 'admin.settings')->name('settings.index');
+    });
+
+    // ----- Keamanan & audit (khusus Super Admin) -----
+    Route::middleware('role:Super Admin')->group(function () {
+        Volt::route('log-aktivitas', 'admin.log-aktivitas')->name('log-aktivitas');
+        Volt::route('tutorial-foto', 'admin.tutorial-foto')->name('tutorial-foto');
+
+        Route::get('log-arsip/{name}', function (string $name) {
+            $path = 'log-archives/'.basename($name); // basename → cegah path traversal
+            abort_unless(\Illuminate\Support\Facades\Storage::disk('local')->exists($path), 404);
+
+            return \Illuminate\Support\Facades\Storage::disk('local')->download($path);
+        })->name('log.archive.download');
     });
 });
 

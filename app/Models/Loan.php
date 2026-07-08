@@ -65,6 +65,22 @@ class Loan extends Model
             && $this->tanggal_jatuh_tempo?->isPast();
     }
 
+    /** Jumlah HARI PENUH keterlambatan sampai $asOf (default sekarang). 0 bila belum lewat tempo. */
+    public function daysLate(?\Illuminate\Support\Carbon $asOf = null): int
+    {
+        $asOf ??= now();
+        $due = $this->tanggal_jatuh_tempo;
+
+        if (! $due) {
+            return 0;
+        }
+
+        $dueDay = $due->copy()->startOfDay();
+        $asDay = $asOf->copy()->startOfDay();
+
+        return $asDay->greaterThan($dueDay) ? (int) $dueDay->diffInDays($asDay) : 0;
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereIn('status', array_map(fn ($s) => $s->value, LoanStatus::active()));

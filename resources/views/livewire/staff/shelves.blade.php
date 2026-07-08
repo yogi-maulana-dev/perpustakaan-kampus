@@ -72,7 +72,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
     {
         return [
             'items' => Shelf::withCount('books')
-                ->when($this->search, fn ($q) => $q->where('kode_rak', 'ilike', "%{$this->search}%")->orWhere('lokasi', 'ilike', "%{$this->search}%"))
+                ->when($this->search, fn ($q) => $q->whereLike('kode_rak', "%{$this->search}%")->orWhereLike('lokasi', "%{$this->search}%"))
                 ->latest()->paginate(10),
         ];
     }

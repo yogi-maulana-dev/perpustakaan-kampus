@@ -44,9 +44,9 @@ new #[Layout('layouts.dashboard')] class extends Component {
         return [
             'books' => Book::with(['category', 'author'])
                 ->when($this->search, fn ($q) => $q->where(fn ($s) => $s
-                    ->where('judul', 'ilike', "%{$this->search}%")
-                    ->orWhere('isbn', 'ilike', "%{$this->search}%")
-                    ->orWhereHas('author', fn ($a) => $a->where('nama', 'ilike', "%{$this->search}%"))))
+                    ->whereLike('judul', "%{$this->search}%")
+                    ->orWhereLike('isbn', "%{$this->search}%")
+                    ->orWhereHas('author', fn ($a) => $a->whereLike('nama', "%{$this->search}%"))))
                 ->when($this->category, fn ($q) => $q->where('category_id', $this->category))
                 ->orderBy('judul')
                 ->paginate(12),

@@ -37,7 +37,7 @@
                     $tipe = strtoupper($profile->tipe->label());
                     $nomor = $profile->nomorIdentitas() ?: 'UML'.str_pad((string) $user->id, 8, '0', STR_PAD_LEFT);
                     $foto = $profile->foto ? Storage::disk('public')->url($profile->foto) : null;
-                    $berlaku = $user->created_at->copy()->addYears(5)->format('d-m-Y');
+                    $berlaku = $profile->kartuBerlakuSampai()?->format('d-m-Y') ?? '-';
                     $prodi = trim(($profile->jenjang ? $profile->jenjang.' ' : '').$profile->program_studi);
                 @endphp
                 <div class="kartu overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-emerald-100">
@@ -79,6 +79,9 @@
                         <p class="font-semibold">Dikembangkan oleh yogi-maulana-dev</p>
                     </div>
                 </div>
+
+                {{-- Sisi belakang kartu (berdampingan dengan sisi depan) --}}
+                @include('partials.kartu-belakang')
             @endforeach
         </div>
     </div>

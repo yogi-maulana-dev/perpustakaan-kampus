@@ -30,7 +30,7 @@ class SmokeTest extends TestCase
         foreach ([
             '/dashboard', '/buku', '/kategori', '/penulis', '/penerbit', '/rak',
             '/mahasiswa', '/users', '/pengaturan', '/peminjaman', '/pengembalian',
-            '/denda', '/laporan', '/slider', '/pengurus', '/e-katalog',
+            '/denda', '/laporan', '/slider', '/pengurus', '/e-resources',
         ] as $url) {
             $this->actingAs($admin)->get($url)->assertOk();
         }

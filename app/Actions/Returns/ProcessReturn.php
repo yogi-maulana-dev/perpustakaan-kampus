@@ -45,10 +45,10 @@ class ProcessReturn
                 'catatan' => $catatan,
             ]);
 
-            // Hitung keterlambatan.
+            // Hitung keterlambatan dalam HARI PENUH (bilangan bulat, bukan desimal).
             $jatuhTempo = $loan->tanggal_jatuh_tempo;
             $hariTelat = $jatuhTempo && $tanggal->gt($jatuhTempo)
-                ? $jatuhTempo->diffInDays($tanggal)
+                ? (int) $jatuhTempo->copy()->startOfDay()->diffInDays($tanggal->copy()->startOfDay())
                 : 0;
 
             $loan->update([
@@ -56,17 +56,28 @@ class ProcessReturn
                 'status' => $hariTelat > 0 ? LoanStatus::Terlambat : LoanStatus::Dikembalikan,
             ]);
 
-            if ($hariTelat > 0) {
-                $fine = Fine::create([
-                    'loan_id' => $loan->id,
-                    'user_id' => $loan->user_id,
-                    'jumlah_hari_telat' => $hariTelat,
-                    'tarif_denda' => $tarif,
-                    'total_denda' => $hariTelat * $tarif,
-                    'status' => FineStatus::BelumBayar,
-                ]);
+            // Finalisasi denda. Bila sudah ada denda berjalan, PERBARUI (bukan duplikat);
+            // jangan timpa yang sudah Lunas/Dibebaskan.
+            $existingFine = $loan->fine()->first();
 
-                $loan->user->notify(new LoanOverdue($loan, $fine));
+            if ($hariTelat > 0) {
+                if (! $existingFine || $existingFine->status === FineStatus::BelumBayar) {
+                    $fine = Fine::updateOrCreate(
+                        ['loan_id' => $loan->id],
+                        [
+                            'user_id' => $loan->user_id,
+                            'jumlah_hari_telat' => $hariTelat,
+                            'tarif_denda' => $tarif,
+                            'total_denda' => $hariTelat * $tarif,
+                            'status' => FineStatus::BelumBayar,
+                        ],
+                    );
+
+                    $loan->user->notify(new LoanOverdue($loan, $fine));
+                }
+            } elseif ($existingFine && $existingFine->status === FineStatus::BelumBayar) {
+                // Dikembalikan tidak telat (mis. tanggal dikoreksi) → hapus denda berjalan yang belum dibayar.
+                $existingFine->delete();
             }
 
             ActivityLog::create([

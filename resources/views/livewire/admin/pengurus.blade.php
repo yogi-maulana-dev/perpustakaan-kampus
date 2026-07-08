@@ -20,7 +20,8 @@ new #[Layout('layouts.dashboard')] class extends Component {
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->can('kelola master'), 403);
+        // Pengurus hanya untuk pengelola (Super Admin & Admin), bukan Librarian/Staff.
+        abort_unless(auth()->user()->hasAnyRole(\App\Enums\RoleName::managerRoles()), 403);
     }
 
     protected function rules(): array
@@ -112,8 +113,8 @@ new #[Layout('layouts.dashboard')] class extends Component {
 <div>
     <div class="mb-4 flex items-center justify-between gap-3">
         <div class="rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
-            <span class="font-semibold">Ketentuan foto:</span> potret/persegi disarankan <strong>600 × 750 px</strong> ·
-            format <strong>JPG, PNG, WEBP</strong> · maks <strong>2 MB</strong>.
+            <span class="font-semibold">Tampil sebagai slider berjalan</span> di halaman depan (foto bundar). Foto disarankan
+            <strong>potret/persegi 600 × 750 px</strong> · JPG/PNG/WEBP · maks <strong>2 MB</strong>. Atur posisi lewat <strong>Urutan</strong>.
         </div>
         <button wire:click="create" class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800">
             <x-icon name="plus" class="h-4 w-4" /> Tambah Pengurus

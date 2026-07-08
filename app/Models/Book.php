@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 class Book extends Model
 {
     protected $fillable = [
+        'uuid',
         'kode_buku',
         'isbn',
         'judul',
@@ -19,11 +20,20 @@ class Book extends Model
         'publisher_id',
         'shelf_id',
         'tahun_terbit',
+        'cetakan',
         'jumlah_stok',
         'stok_tersedia',
         'deskripsi',
         'cover',
     ];
+
+    protected static function booted(): void
+    {
+        // UUID otomatis untuk URL publik.
+        static::creating(function (self $book): void {
+            $book->uuid ??= (string) \Illuminate\Support\Str::uuid();
+        });
+    }
 
     protected function casts(): array
     {

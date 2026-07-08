@@ -47,6 +47,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
                 ['type' => 'students', 'label' => 'Laporan Data Anggota', 'icon' => 'users', 'excel' => false],
                 ['type' => 'loans', 'label' => 'Laporan Peminjaman', 'icon' => 'swap', 'excel' => 'transactions'],
                 ['type' => 'fines', 'label' => 'Laporan Denda', 'icon' => 'cash', 'excel' => false],
+                ['type' => 'renewals', 'label' => 'Laporan Perpanjangan Kartu', 'icon' => 'clock', 'excel' => true],
             ];
         @endphp
 

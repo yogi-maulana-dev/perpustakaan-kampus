@@ -47,6 +47,11 @@ new #[Layout('layouts.dashboard')] class extends Component {
         <h2 class="text-lg font-bold text-emerald-900">Upload Pas Foto</h2>
         <p class="mt-1 text-sm text-gray-500">Disarankan <strong>pas foto 3×4</strong> (mis. 300 × 400 px), wajah jelas & tegak, format JPG/PNG, maks 2 MB.</p>
 
+        {{-- Tombol + modal tutorial (muncul otomatis, dikelola Super Admin) --}}
+        <div class="mt-3">
+            @include('partials.modal-tutorial-foto')
+        </div>
+
         <form wire:submit="save" class="mt-6 space-y-4">
             <div class="flex items-start gap-4">
                 {{-- Preview rasio 3:4 --}}

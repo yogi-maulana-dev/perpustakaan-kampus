@@ -28,9 +28,8 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        Volt::test('pages.auth.forgot-password')
-            ->set('email', $user->email)
-            ->call('sendPasswordResetLink');
+        $fp = Volt::test('pages.auth.forgot-password')->set('email', $user->email);
+        $fp->set('captcha', (string) ($fp->get('a') + $fp->get('b')))->call('sendPasswordResetLink');
 
         Notification::assertSentTo($user, ResetPassword::class);
     }
@@ -41,9 +40,8 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        Volt::test('pages.auth.forgot-password')
-            ->set('email', $user->email)
-            ->call('sendPasswordResetLink');
+        $fp = Volt::test('pages.auth.forgot-password')->set('email', $user->email);
+        $fp->set('captcha', (string) ($fp->get('a') + $fp->get('b')))->call('sendPasswordResetLink');
 
         Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
             $response = $this->get('/reset-password/'.$notification->token);
@@ -62,9 +60,8 @@ class PasswordResetTest extends TestCase
 
         $user = User::factory()->create();
 
-        Volt::test('pages.auth.forgot-password')
-            ->set('email', $user->email)
-            ->call('sendPasswordResetLink');
+        $fp = Volt::test('pages.auth.forgot-password')->set('email', $user->email);
+        $fp->set('captcha', (string) ($fp->get('a') + $fp->get('b')))->call('sendPasswordResetLink');
 
         Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
             $component = Volt::test('pages.auth.reset-password', ['token' => $notification->token])

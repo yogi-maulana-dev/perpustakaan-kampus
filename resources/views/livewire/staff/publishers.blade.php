@@ -60,7 +60,7 @@ new #[Layout('layouts.dashboard')] class extends Component {
     {
         return [
             'items' => Publisher::withCount('books')
-                ->when($this->search, fn ($q) => $q->where('nama', 'ilike', "%{$this->search}%"))
+                ->when($this->search, fn ($q) => $q->whereLike('nama', "%{$this->search}%"))
                 ->latest()->paginate(10),
         ];
     }

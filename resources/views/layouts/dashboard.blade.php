@@ -38,7 +38,7 @@
                 <x-nav-link-side :href="route('my-fines')" :active="request()->routeIs('my-fines')" icon="cash">Denda Saya</x-nav-link-side>
             @endrole
 
-            @hasanyrole('Super Admin|Librarian|Staff')
+            @hasanyrole('Super Admin|Admin|Librarian|Staff')
                 <x-nav-section>Operasional</x-nav-section>
                 @can('approve mahasiswa')
                     <x-nav-link-side :href="route('students.index')" :active="request()->routeIs('students.*')" icon="user-check">Data Anggota</x-nav-link-side>
@@ -65,8 +65,7 @@
                     <x-nav-link-side :href="route('publishers.index')" :active="request()->routeIs('publishers.*')" icon="building">Penerbit</x-nav-link-side>
                     <x-nav-link-side :href="route('shelves.index')" :active="request()->routeIs('shelves.*')" icon="grid">Rak Buku</x-nav-link-side>
                     <x-nav-link-side :href="route('sliders.index')" :active="request()->routeIs('sliders.*')" icon="image">Slider</x-nav-link-side>
-                    <x-nav-link-side :href="route('pengurus.index')" :active="request()->routeIs('pengurus.*')" icon="users">Pengurus</x-nav-link-side>
-                    <x-nav-link-side :href="route('ekatalog.index')" :active="request()->routeIs('ekatalog.*')" icon="book">E-Katalog</x-nav-link-side>
+                    <x-nav-link-side :href="route('ekatalog.index')" :active="request()->routeIs('ekatalog.*')" icon="book">E-Resources</x-nav-link-side>
                 @endcan
 
                 @can('lihat laporan')
@@ -75,11 +74,33 @@
                 @endcan
             @endhasanyrole
 
-            @hasrole('Super Admin')
+            @hasanyrole('Super Admin|Admin')
                 <x-nav-section>Administrasi</x-nav-section>
+
+                {{-- Profil (dengan submenu) --}}
+                <div x-data="{ open: {{ request()->routeIs('profil.index') ? 'true' : 'false' }} }">
+                    <button type="button" @click="open = !open"
+                            class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-emerald-100 transition hover:bg-white/10 hover:text-white">
+                        <x-icon name="doc" class="h-5 w-5 shrink-0" />
+                        <span>Profil</span>
+                        <svg class="ml-auto h-4 w-4 transition-transform" :class="open && 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak class="mt-1 space-y-1 pl-4">
+                        <a href="{{ route('profil.index') }}#visi-misi" class="block rounded-lg px-3 py-2 text-emerald-100 transition hover:bg-white/10 hover:text-white">Visi &amp; Misi</a>
+                        <a href="{{ route('profil.index') }}#sejarah" class="block rounded-lg px-3 py-2 text-emerald-100 transition hover:bg-white/10 hover:text-white">Sejarah</a>
+                        <a href="{{ route('profil.index') }}#struktur" class="block rounded-lg px-3 py-2 text-emerald-100 transition hover:bg-white/10 hover:text-white">Struktur Organisasi</a>
+                    </div>
+                </div>
+
+                <x-nav-link-side :href="route('pengurus.index')" :active="request()->routeIs('pengurus.*')" icon="users">Pengurus</x-nav-link-side>
+                <x-nav-link-side :href="route('kontak.index')" :active="request()->routeIs('kontak.*')" icon="phone">Kontak</x-nav-link-side>
                 <x-nav-link-side :href="route('users.index')" :active="request()->routeIs('users.*')" icon="users">Manajemen Staff</x-nav-link-side>
                 <x-nav-link-side :href="route('settings.index')" :active="request()->routeIs('settings.*')" icon="cog">Pengaturan</x-nav-link-side>
-            @endhasrole
+                @hasrole('Super Admin')
+                    <x-nav-link-side :href="route('log-aktivitas')" :active="request()->routeIs('log-aktivitas')" icon="shield">Log Aktivitas</x-nav-link-side>
+                    <x-nav-link-side :href="route('tutorial-foto')" :active="request()->routeIs('tutorial-foto')" icon="image">Tutorial Ganti Ukuran Foto</x-nav-link-side>
+                @endhasrole
+            @endhasanyrole
         </nav>
 
         <div class="border-t border-white/10 p-3">

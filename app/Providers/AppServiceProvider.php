@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Enums\RoleName;
+use App\Listeners\AuthActivitySubscriber;
 use App\Models\Setting;
+use App\Observers\ActivityObserver;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +32,29 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->applyMailSettingsFromDatabase();
+
+        // Catat aktivitas autentikasi (login/logout) + login_attempts.
+        Event::subscribe(AuthActivitySubscriber::class);
+
+        // Catat tambah/ubah/hapus data model bisnis penting.
+        foreach ([
+            \App\Models\Book::class,
+            \App\Models\Category::class,
+            \App\Models\Author::class,
+            \App\Models\Publisher::class,
+            \App\Models\Shelf::class,
+            \App\Models\Loan::class,
+            \App\Models\Fine::class,
+            \App\Models\BookReturn::class,
+            \App\Models\User::class,
+            \App\Models\MahasiswaProfile::class,
+            \App\Models\Slider::class,
+            \App\Models\Pengurus::class,
+            \App\Models\Ekatalog::class,
+            \App\Models\BlockedIp::class,
+        ] as $model) {
+            $model::observe(ActivityObserver::class);
+        }
 
         // Isi email reset password dapat diatur admin (Pengaturan).
         \Illuminate\Auth\Notifications\ResetPassword::toMailUsing(function ($notifiable, string $token) {

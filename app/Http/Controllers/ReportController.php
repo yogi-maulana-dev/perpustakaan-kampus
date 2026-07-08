@@ -18,10 +18,10 @@ use Symfony\Component\HttpFoundation\Response;
 class ReportController extends Controller
 {
     /** Tipe laporan PDF yang valid. */
-    private const PDF_TYPES = ['books', 'students', 'loans', 'fines'];
+    private const PDF_TYPES = ['books', 'students', 'loans', 'fines', 'renewals'];
 
     /** Tipe laporan Excel yang valid. */
-    private const EXCEL_TYPES = ['books', 'transactions'];
+    private const EXCEL_TYPES = ['books', 'transactions', 'renewals'];
 
     public function pdf(Request $request, string $type): Response
     {
@@ -44,6 +44,7 @@ class ReportController extends Controller
         $export = match ($type) {
             'books' => new BooksExport(),
             'transactions' => new TransactionsExport($from, $to),
+            'renewals' => new \App\Exports\CardRenewalsExport($from, $to),
         };
 
         return Excel::download($export, "laporan-{$type}-".now()->format('Ymd-His').'.xlsx');
@@ -78,6 +79,13 @@ class ReportController extends Controller
             'fines' => $period + [
                 'title' => 'Laporan Denda',
                 'fines' => Fine::with(['user', 'loan'])
+                    ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
+                    ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
+                    ->latest()->get(),
+            ],
+            'renewals' => $period + [
+                'title' => 'Laporan Perpanjangan Kartu Anggota',
+                'renewals' => \App\Models\CardRenewal::with(['user.mahasiswaProfile', 'petugas'])
                     ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
                     ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
                     ->latest()->get(),

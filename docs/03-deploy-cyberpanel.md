@@ -200,10 +200,68 @@ Upload (atau biarkan admin upload via panel) ke `public/images/` & `public/anima
 
 ### Ringkas yang HARUS disiapkan
 1. VPS Ubuntu + CyberPanel
-2. **PHP 8.3 (lsphp83)** + ekstensi (terutama `pgsql`, `gd`, `zip`, `intl`, `bcmath`)
+2. **PHP 8.3 (lsphp83)** + ekstensi (terutama `pgsql`, `gd`, `zip`, `intl`, `bcmath`, `mbstring`, `xml`)
 3. **PostgreSQL** + database + user
 4. **Composer**
 5. Node (untuk build asset) — atau build di laptop
 6. Cron (scheduler) + (opsional) queue worker systemd
 7. SSL Let's Encrypt
 8. Document root diarahkan ke `/public`
+
+---
+
+## 19. Tambahan untuk fitur terbaru (2FA, Import Excel, Log Aktivitas & Trigger, Lokasi)
+
+**A. Migrasi + trigger PostgreSQL.** `php artisan migrate --force` memasang kolom/tabel baru
+(`users.two_factor_*`, `books.cetakan`, `activity_logs` diperluas, `login_attempts`, `blocked_ips`,
+`location_pings`) **dan 2 database trigger** (`users_status_change_trigger`, `login_attempts_suspicious_trigger`).
+Trigger hanya dibuat di PostgreSQL — user DB harus punya hak `CREATE FUNCTION`/`CREATE TRIGGER`
+(pemilik database `perpus_app` sudah cukup). Cek: `\df trg_*` di `psql`.
+
+**B. Role & akun.**
+- Fresh install: `php artisan db:seed --force`.
+- DB sudah berisi data: `php artisan db:seed --class=RolePermissionSeeder --force` (membuat role **Admin** + izin),
+  lalu buat akun `superadmin@` (role Super Admin) dan set akun admin lama ke role **Admin**.
+- Akun demo: **superadmin@perpustakaan.test** (Super Admin — satu-satunya akses `/log-aktivitas`),
+  **admin@perpustakaan.test** (Admin). **Ganti email & password asli, hapus akun demo setelah live.**
+
+**C. APP_KEY WAJIB stabil.** Secret 2FA disimpan terenkripsi dengan `APP_KEY`. **Jangan pernah ganti
+`APP_KEY`** setelah ada user mengaktifkan 2FA — kalau diganti, secret 2FA tak terbaca dan user harus
+direset 2FA-nya oleh admin. Backup `.env`.
+
+**D. HTTPS WAJIB untuk fitur Lokasi.** Tombol "Buka/Buka Akses" merekam lokasi via geolocation browser,
+yang **hanya jalan di HTTPS** (atau localhost). Pastikan SSL Let's Encrypt aktif (langkah 16). Tanpa HTTPS,
+prompt izin lokasi tidak muncul (di HP maupun desktop).
+
+**E. Naikkan limit upload PHP** (untuk Import Excel & upload cover/foto massal). Edit php.ini lsphp83
+(`/usr/local/lsws/lsphp83/etc/php/8.3/litespeed/php.ini` atau CyberPanel → PHP → Edit PHP Configs):
+```ini
+upload_max_filesize = 20M
+post_max_size = 60M
+max_file_uploads = 60
+memory_limit = 256M
+max_execution_time = 180
+```
+Lalu **restart LiteSpeed**. (Baca `.xls/.xlsx` butuh ekstensi `zip`, `gd`, `xml`, `mbstring` — sudah di langkah 3.)
+
+**F. Storage & Livewire temp.** `php artisan storage:link`. Folder upload otomatis dibuat di disk `public`:
+`covers/`, `foto-anggota/`, `ktm/`. Upload sementara Livewire di `storage/app/livewire-tmp` harus writable
+(sudah tercakup `chown` di langkah 13).
+
+**G. Cache untuk blokir IP & throttle.** Middleware blokir-IP dan endpoint `/verifikasi-lokasi`
+(throttle) memakai cache. Pastikan `CACHE_STORE=database` (langkah 9) dan tabel cache termigrasi.
+
+**H. Build ulang asset.** Ada CSS/Tailwind + JS baru (QR 2FA, tombol lokasi): `npm run build`
+(atau upload `public/build`).
+
+**I. Urutan saat update kode (redeploy):**
+```bash
+php artisan down
+git pull                      # atau upload kode
+composer install --no-dev --optimize-autoloader
+php artisan optimize:clear
+php artisan migrate --force
+npm run build                 # atau upload public/build
+php artisan optimize
+php artisan up
+```

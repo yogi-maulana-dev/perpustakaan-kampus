@@ -25,11 +25,15 @@ class MahasiswaProfile extends Model
         'no_hp',
         'ktm_path',
         'foto',
+        'kartu_berlaku_sampai',
     ];
 
     protected function casts(): array
     {
-        return ['tipe' => MemberType::class];
+        return [
+            'tipe' => MemberType::class,
+            'kartu_berlaku_sampai' => 'date',
+        ];
     }
 
     public function user(): BelongsTo
@@ -45,5 +49,28 @@ class MahasiswaProfile extends Model
             MemberType::Umum => $this->nomor_identitas,
             default => $this->nim,
         };
+    }
+
+    /**
+     * Tanggal berakhir keanggotaan/kartu. Bila belum pernah diperpanjang,
+     * dihitung dari tanggal daftar + masa berlaku (Pengaturan, default 5 tahun).
+     */
+    public function kartuBerlakuSampai(): ?\Illuminate\Support\Carbon
+    {
+        if ($this->kartu_berlaku_sampai) {
+            return \Illuminate\Support\Carbon::parse($this->kartu_berlaku_sampai);
+        }
+
+        $tahun = max(1, (int) Setting::get('masa_berlaku_kartu', 5));
+
+        return $this->user?->created_at?->copy()->addYears($tahun);
+    }
+
+    /** Keanggotaan sudah lewat masa berlaku? */
+    public function kartuKadaluarsa(): bool
+    {
+        $sampai = $this->kartuBerlakuSampai();
+
+        return $sampai !== null && $sampai->copy()->endOfDay()->isPast();
     }
 }
